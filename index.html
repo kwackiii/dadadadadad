@@ -359,6 +359,8 @@
               <span class="badge">구간 <strong id="routeText">현실 → 서울</strong></span>
               <span class="badge">인원 <strong id="paxText">1</strong></span>
               <span class="badge">출발일 <strong id="dateText">미지정</strong></span>
+              <!-- (추가) 스탬프/배지 영역: 기존 스타일 badge 재사용 -->
+              <span class="badge" id="stampBadge" style="display:none">등급 <strong id="stampText">VIP</strong></span>
             </div>
             <div class="notice" style="margin-top:12px">
               <p class="k">상품</p>
@@ -451,6 +453,21 @@
     // 1) 데이터만 바꾸면 운영 가능
     // =========================
     const RELEASE_DATE = "2026-03-01"; // TODO: 발매일로 수정
+
+    // (추가) 안내방송 스케줄
+    // - GitHub Pages 단독에서는 서버 푸시 불가
+    // - 대신 "페이지를 열어둔 상태"라면 이 시간에 toast로 안내 가능
+    // - 형식: "YYYY-MM-DD HH:MM" (사용자 로컬 시간 기준)
+    const ANNOUNCEMENTS = [
+      { at: "2026-01-21 12:00", message: "안내: 12:00 편성 안내 방송입니다." }
+    ];
+
+    // (추가) 로컬 저장 키
+    const LS_KEYS = {
+      trainRides: "ddd_train_rides_v1",     // 열차 탑승 기록 (트랙)
+      contentRides: "ddd_content_rides_v1", // 콘텐츠 탑승 기록
+      announced: "ddd_announced_v1"         // 안내방송 중복 방지
+    };
 
     // 열차(=트랙) 정보
     const TRAINS = [
@@ -551,7 +568,7 @@
       el.textContent = msg;
       el.classList.add("show");
       clearTimeout(toast._t);
-      toast._t = setTimeout(()=> el.classList.remove("show"), 2200);
+      toast._t = setTimeout(()=> el.classList.remove("show"), 2600);
     }
 
     function formatDateKR(iso){
@@ -567,12 +584,221 @@
       $("#dateText").textContent = state.date ? formatDateKR(state.date) : "미지정";
     }
 
+    // -------------------------
+    // (추가) localStorage helpers
+    // -------------------------
+    function lsGetSet(key){
+      try{
+        const raw = localStorage.getItem(key);
+        const arr = raw ? JSON.parse(raw) : [];
+        return new Set(Array.isArray(arr) ? arr : []);
+      }catch(_){
+        return new Set();
+      }
+    }
+    function lsSaveSet(key, set){
+      try{
+        localStorage.setItem(key, JSON.stringify(Array.from(set)));
+      }catch(_){}
+    }
+
+    function markTrainRide(trainId){
+      const s = lsGetSet(LS_KEYS.trainRides);
+      s.add(trainId);
+      lsSaveSet(LS_KEYS.trainRides, s);
+    }
+    function markContentRide(contentKey){
+      const s = lsGetSet(LS_KEYS.contentRides);
+      s.add(contentKey);
+      lsSaveSet(LS_KEYS.contentRides, s);
+    }
+
+    // -------------------------
+    // (추가) 스탬프/배지 갱신
+    // - "탑승가능(ok)" 콘텐츠 전부 탑승하면 VIP
+    // -------------------------
+    function updateStampBadge(){
+      const rides = lsGetSet(LS_KEYS.contentRides);
+      const available = CONTENTS
+        .filter(c => c.status === "ok" && c.url)
+        .map(c => contentKey(c));
+
+      const done = available.filter(k => rides.has(k)).length;
+      const total = available.length;
+
+      const badge = $("#stampBadge");
+      const text = $("#stampText");
+
+      if(total > 0 && done >= total){
+        badge.style.display = "";
+        text.textContent = "VIP";
+      }else{
+        badge.style.display = "none";
+      }
+    }
+
+    // -------------------------
+    // (추가) 승차권 이미지 생성/다운로드
+    // -------------------------
+    function downloadTicketPNG(ticket){
+      // ticket: { trainId, trainName, route, depart, arrive, duration, grade, date, pax }
+      const W = 1080, H = 640;
+      const c = document.createElement("canvas");
+      c.width = W; c.height = H;
+      const ctx = c.getContext("2d");
+
+      // 배경
+      const bg = ctx.createLinearGradient(0,0,W,H);
+      bg.addColorStop(0, "#0f1320");
+      bg.addColorStop(1, "#070910");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0,0,W,H);
+
+      // 패널
+      const pad = 56;
+      const r = 28;
+      roundRect(ctx, pad, pad, W - pad*2, H - pad*2, r);
+      ctx.fillStyle = "rgba(17,21,34,0.92)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(36,48,74,0.9)";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // 상단 바
+      roundRect(ctx, pad+24, pad+24, W - (pad+24)*2, 84, 18);
+      const topGrad = ctx.createLinearGradient(0,0,W,0);
+      topGrad.addColorStop(0, "rgba(110,168,255,0.92)");
+      topGrad.addColorStop(1, "rgba(255,92,122,0.78)");
+      ctx.fillStyle = topGrad;
+      ctx.fill();
+
+      // 타이틀
+      ctx.fillStyle = "#081022";
+      ctx.font = "800 30px " + getCanvasSans();
+      ctx.fillText("승차권", pad+48, pad+78);
+
+      ctx.font = "700 18px " + getCanvasMono();
+      ctx.fillText("DADADA DOUBLE SINGLE", W - pad - 48 - ctx.measureText("DADADA DOUBLE SINGLE").width, pad+78);
+
+      // 본문 텍스트 컬러
+      ctx.fillStyle = "#e9eefc";
+
+      // 좌측 큰 정보
+      ctx.font = "900 42px " + getCanvasSans();
+      ctx.fillText(ticket.trainName, pad+48, pad+170);
+
+      ctx.font = "800 24px " + getCanvasMono();
+      ctx.fillStyle = "rgba(168,179,204,0.95)";
+      ctx.fillText(ticket.trainId + "  ·  " + ticket.grade, pad+48, pad+210);
+
+      // 구간 박스
+      ctx.fillStyle = "rgba(8,10,16,0.45)";
+      roundRect(ctx, pad+48, pad+240, W - pad*2 - 96, 96, 18);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(36,48,74,0.7)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = "#e9eefc";
+      ctx.font = "850 34px " + getCanvasSans();
+      ctx.fillText(ticket.route, pad+72, pad+304);
+
+      // 상세 표
+      const leftX = pad+48, baseY = pad+380, rowH = 46;
+      const rows = [
+        ["출발", ticket.depart],
+        ["도착", ticket.arrive],
+        ["소요", ticket.duration],
+        ["출발일", ticket.date || "미지정"],
+        ["인원", String(ticket.pax)]
+      ];
+
+      ctx.font = "700 22px " + getCanvasMono();
+      for(let i=0;i<rows.length;i++){
+        const y = baseY + i*rowH;
+        ctx.fillStyle = "rgba(126,138,168,0.95)";
+        ctx.fillText(rows[i][0], leftX, y);
+        ctx.fillStyle = "#e9eefc";
+        ctx.fillText(rows[i][1], leftX + 220, y);
+      }
+
+      // 우측 QR 느낌(실제 QR은 아님) + 안내
+      const bx = W - pad - 48 - 220;
+      const by = pad + 360;
+      roundRect(ctx, bx, by, 220, 220, 18);
+      ctx.fillStyle = "rgba(8,10,16,0.45)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(36,48,74,0.7)";
+      ctx.stroke();
+
+      // 모양만 QR처럼
+      ctx.fillStyle = "rgba(110,168,255,0.35)";
+      for(let y=0;y<10;y++){
+        for(let x=0;x<10;x++){
+          if((x*y + x + y) % 3 === 0){
+            ctx.fillRect(bx+18 + x*18, by+18 + y*18, 12, 12);
+          }
+        }
+      }
+      ctx.fillStyle = "rgba(168,179,204,0.9)";
+      ctx.font = "700 16px " + getCanvasMono();
+      ctx.fillText("TAP / SCAN", bx+62, by+208);
+
+      // 하단 문구
+      ctx.fillStyle = "rgba(168,179,204,0.85)";
+      ctx.font = "700 16px " + getCanvasMono();
+      ctx.fillText("본 승차권은 예매가 아닙니다.", pad+48, H - pad - 28);
+
+      // 다운로드
+      const fileName = `ticket_${ticket.trainId}_${(ticket.date||"nodate").replaceAll(".","-")}.png`;
+      const a = document.createElement("a");
+      a.href = c.toDataURL("image/png");
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      toast("승차권 다운로드");
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+    function getCanvasSans(){
+      // 가능한 환경에서 기본 시스템 폰트 사용
+      return 'system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif';
+    }
+    function getCanvasMono(){
+      return 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    }
+
+    // -------------------------
+    // (추가) 콘텐츠 키 생성(탑승 기록용)
+    // -------------------------
+    function contentKey(c){
+      return `${c.date}|${c.type}|${c.title}`;
+    }
+
     function renderTrains(){
       const tbody = $("#trainRows");
       tbody.innerHTML = "";
 
+      const trainRides = lsGetSet(LS_KEYS.trainRides);
+
       for(const t of TRAINS){
         const tr = document.createElement("tr");
+
+        const doneMark = trainRides.has(t.id)
+          ? `<span class="pill" style="margin-left:8px">완료</span>`
+          : "";
+
         tr.innerHTML = `
           <td class="mono"><strong>${t.id}</strong></td>
           <td>
@@ -580,6 +806,7 @@
               <span class="pill">${state.from} → ${state.to}</span>
               <span class="pill">${t.name}</span>
               <span class="pill">${t.routeTag}</span>
+              ${doneMark}
             </div>
           </td>
           <td class="mono">${t.depart}</td>
@@ -589,7 +816,9 @@
           <td>
             <div class="action">
               <button class="aBtn" data-action="more" data-id="${t.id}" type="button">상세</button>
-              <a class="aBtn primary" href="${t.links.ride}" target="_blank" rel="noopener" aria-label="${t.name} 탑승">탑승</a>
+              <!-- (추가) 탑승 클릭 기록: data-action -->
+              <a class="aBtn primary" data-action="ride-train" data-id="${t.id}"
+                 href="${t.links.ride}" target="_blank" rel="noopener" aria-label="${t.name} 탑승">탑승</a>
             </div>
           </td>
         `;
@@ -606,6 +835,21 @@
                   <div>차량</div><div>${t.meta.차량}</div>
                   <div>좌석</div><div>${t.meta.좌석}</div>
                   <div>비고</div><div>${t.meta.비고}</div>
+
+                  <!-- (추가) 승차권 다운로드 -->
+                  <div>승차권</div>
+                  <div>
+                    <button class="aBtn" type="button"
+                      data-action="ticket"
+                      data-train-id="${t.id}"
+                      data-train-name="${escapeAttr(t.name)}"
+                      data-grade="${escapeAttr(t.grade)}"
+                      data-depart="${escapeAttr(t.depart)}"
+                      data-arrive="${escapeAttr(t.arrive)}"
+                      data-duration="${escapeAttr(t.duration)}"
+                    >다운로드</button>
+                  </div>
+
                   <div>링크</div>
                   <div>
                     <a class="smallLink" href="${t.links.details}" target="_blank" rel="noopener">상세페이지</a>
@@ -621,6 +865,10 @@
       $("#resultHint").textContent = `결과 ${TRAINS.length}건`;
     }
 
+    function escapeAttr(s){
+      return String(s).replaceAll("&","&amp;").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+    }
+
     function statusPill(status){
       if(status === "ok") return `<span class="status ok"><span class="dot"></span>탑승가능</span>`;
       if(status === "end") return `<span class="status end"><span class="dot"></span>종료</span>`;
@@ -631,19 +879,28 @@
       const tbody = $("#contentRows");
       tbody.innerHTML = "";
 
+      const contentRides = lsGetSet(LS_KEYS.contentRides);
+
       for(const c of CONTENTS){
-        const tr = document.createElement("tr");
+        const key = contentKey(c);
         const canRide = c.status === "ok" && c.url;
+        const done = contentRides.has(key);
+
+        // (추가) 완료 표식: 기존 pill 사용 (디자인/구성 유지)
+        const donePill = done ? `<span class="pill" style="margin-left:8px">완료</span>` : "";
+
+        const tr = document.createElement("tr");
         tr.innerHTML = `
           <td class="mono">${formatDateKR(c.date)}</td>
           <td><span class="pill">${c.type}</span></td>
-          <td>${c.title}</td>
+          <td>${c.title}${donePill}</td>
           <td>${statusPill(c.status)}</td>
           <td>
             <div class="action">
               ${
                 canRide
-                  ? `<a class="aBtn primary" href="${c.url}" target="_blank" rel="noopener">탑승</a>`
+                  ? `<a class="aBtn primary" data-action="ride-content" data-ckey="${escapeAttr(key)}"
+                        href="${c.url}" target="_blank" rel="noopener">탑승</a>`
                   : `<span class="aBtn disabled" aria-disabled="true">탑승</span>`
               }
             </div>
@@ -651,6 +908,8 @@
         `;
         tbody.appendChild(tr);
       }
+
+      updateStampBadge();
     }
 
     function bindControls(){
@@ -695,13 +954,93 @@
       // 상세 토글(이벤트 위임)
       $("#trainRows").addEventListener("click", (e)=>{
         const btn = e.target.closest("button[data-action='more']");
-        if(!btn) return;
-        const id = btn.getAttribute("data-id");
-        const fold = document.getElementById(`fold-${id}`);
-        if(!fold) return;
-        const open = fold.classList.toggle("open");
-        btn.textContent = open ? "닫기" : "상세";
+        if(btn){
+          const id = btn.getAttribute("data-id");
+          const fold = document.getElementById(`fold-${id}`);
+          if(!fold) return;
+          const open = fold.classList.toggle("open");
+          btn.textContent = open ? "닫기" : "상세";
+          return;
+        }
+
+        // (추가) 승차권 다운로드 버튼
+        const tbtn = e.target.closest("button[data-action='ticket']");
+        if(tbtn){
+          const ticket = {
+            trainId: tbtn.dataset.trainId,
+            trainName: tbtn.dataset.trainName,
+            grade: tbtn.dataset.grade,
+            depart: tbtn.dataset.depart,
+            arrive: tbtn.dataset.arrive,
+            duration: tbtn.dataset.duration,
+            route: `${state.from} → ${state.to}`,
+            date: state.date ? formatDateKR(state.date) : "미지정",
+            pax: state.pax
+          };
+          downloadTicketPNG(ticket);
+          return;
+        }
       });
+
+      // (추가) 탑승 기록 저장(열차/콘텐츠)
+      // - 링크 이동은 그대로 두고, 클릭 시 기록만 남김
+      document.addEventListener("click", (e)=>{
+        const aTrain = e.target.closest("a[data-action='ride-train']");
+        if(aTrain){
+          const id = aTrain.dataset.id;
+          if(id){
+            markTrainRide(id);
+            // 즉시 표식 반영
+            renderTrains();
+          }
+          return;
+        }
+
+        const aContent = e.target.closest("a[data-action='ride-content']");
+        if(aContent){
+          const key = aContent.dataset.ckey;
+          if(key){
+            markContentRide(key);
+            // 즉시 표식/배지 반영
+            renderContents();
+          }
+          return;
+        }
+      });
+    }
+
+    // -------------------------
+    // (추가) 안내방송 스케줄러
+    // - 페이지가 열려 있어야 동작
+    // - 이미 뜬 방송은 localStorage로 중복 방지
+    // -------------------------
+    function parseLocalDateTime(s){
+      // "YYYY-MM-DD HH:MM" -> Date(로컬)
+      const m = /^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$/.exec(s);
+      if(!m) return null;
+      const y = Number(m[1]), mo = Number(m[2]) - 1, d = Number(m[3]), hh = Number(m[4]), mm = Number(m[5]);
+      return new Date(y, mo, d, hh, mm, 0, 0);
+    }
+
+    function runAnnouncements(){
+      const fired = lsGetSet(LS_KEYS.announced);
+      const now = new Date();
+
+      for(const a of ANNOUNCEMENTS){
+        const dt = parseLocalDateTime(a.at);
+        if(!dt) continue;
+
+        const key = a.at + "|" + a.message;
+        if(fired.has(key)) continue;
+
+        // 30초 윈도우 안에 들어오면 발화
+        const diff = dt.getTime() - now.getTime();
+        if(diff <= 0 && diff > -30000){
+          toast(a.message);
+          fired.add(key);
+          lsSaveSet(LS_KEYS.announced, fired);
+        }
+      }
     }
 
     // init
@@ -710,6 +1049,10 @@
       syncSummary();
       renderTrains();
       renderContents();
+
+      // (추가) 안내방송 체크
+      runAnnouncements();
+      setInterval(runAnnouncements, 1000);
     })();
   </script>
 </body>
