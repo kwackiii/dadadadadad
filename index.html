@@ -1,18 +1,17 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>다다다 | 콘텐츠 탑승 예약</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>다다다 | 열차 예매</title>
 
 <style>
 :root{
-  --bg:#f5f7fa;
-  --panel:#ffffff;
-  --line:#e5e7eb;
-  --text:#111827;
-  --muted:#6b7280;
-  --primary:#2563eb;
+  --bg:#0b0c10;
+  --panel:#0f121a;
+  --line:rgba(255,255,255,.12);
+  --text:rgba(255,255,255,.92);
+  --muted:rgba(255,255,255,.55);
 }
 
 *{box-sizing:border-box}
@@ -23,12 +22,49 @@ body{
   color:var(--text);
 }
 
-.container{max-width:1100px;margin:0 auto;padding:32px 20px}
+a{color:inherit;text-decoration:none}
 
-h1{font-size:24px;margin-bottom:24px}
+.container{
+  max-width:1100px;
+  margin:0 auto;
+  padding:60px 20px;
+}
 
-/* 검색 박스 */
-.search-box{
+/* ===== HERO ===== */
+.hero{
+  min-height:90vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:20px;
+}
+
+.hero h1{
+  font-size:32px;
+  font-weight:600;
+}
+
+.hero p{
+  color:var(--muted);
+  max-width:520px;
+  line-height:1.6;
+}
+
+.enter{
+  margin-top:24px;
+  display:inline-block;
+  padding:14px 24px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  font-size:14px;
+}
+
+/* ===== BOOKING ===== */
+#booking{
+  margin-top:120px;
+}
+
+.search{
   background:var(--panel);
   border:1px solid var(--line);
   border-radius:12px;
@@ -38,79 +74,80 @@ h1{font-size:24px;margin-bottom:24px}
   gap:12px;
 }
 
-.search-box label{
+.search label{
   font-size:12px;
   color:var(--muted);
   display:block;
   margin-bottom:6px;
 }
 
-.search-box select,
-.search-box input{
+.search select,
+.search input{
   width:100%;
   padding:10px;
-  border:1px solid var(--line);
   border-radius:8px;
-  font-size:14px;
+  border:1px solid var(--line);
+  background:#0b0c10;
+  color:var(--text);
 }
 
-.search-box button{
+.search button{
   padding:0 20px;
-  border:none;
   border-radius:8px;
-  background:var(--primary);
-  color:white;
-  font-size:14px;
+  border:1px solid var(--line);
+  background:transparent;
+  color:var(--text);
   cursor:pointer;
 }
 
-/* 결과 */
-.results{margin-top:32px}
+/* ===== RESULTS ===== */
+.results{
+  margin-top:32px;
+}
+
 .train{
   background:var(--panel);
   border:1px solid var(--line);
-  border-radius:12px;
+  border-radius:14px;
   padding:16px;
   display:grid;
-  grid-template-columns:1.2fr 1fr 1fr .6fr .8fr auto;
+  grid-template-columns:1.6fr 1fr 1fr .8fr auto;
+  gap:14px;
   align-items:center;
-  gap:12px;
-  margin-bottom:12px;
+  margin-bottom:14px;
 }
 
-.train .title{font-weight:600}
+.title{font-weight:600}
 .badge{
   font-size:12px;
-  padding:4px 8px;
+  padding:4px 10px;
   border-radius:999px;
-  display:inline-block;
+  border:1px solid var(--line);
 }
-.on{background:#dcfce7;color:#166534}
-.soon{background:#fef9c3;color:#854d0e}
 
 .board{
-  padding:8px 14px;
-  border:1px solid var(--line);
+  padding:8px 16px;
   border-radius:8px;
-  background:white;
+  border:1px solid var(--line);
+  background:transparent;
+  color:var(--text);
   cursor:pointer;
 }
 
 .empty{
+  margin-top:24px;
+  padding:40px;
   text-align:center;
   color:var(--muted);
-  padding:40px 0;
-  background:var(--panel);
   border:1px dashed var(--line);
   border-radius:12px;
-  margin-top:24px;
 }
 
 footer{
-  margin-top:48px;
+  margin-top:120px;
+  text-align:center;
   font-size:12px;
   color:var(--muted);
-  text-align:center;
 }
 </style>
 </head>
@@ -118,107 +155,68 @@ footer{
 <body>
 <div class="container">
 
-<h1>콘텐츠 탑승 예약</h1>
+<!-- HERO -->
+<section class="hero">
+  <h1>DOUBLE SINGLE<br>〈추락〉 / 〈엔딩 전까지 울지마요〉</h1>
+  <p>
+    현실과 가상의 경계가 무너진 곳.<br>
+    상경이 아니라, 현실로부터의 추락.<br>
+    이 페이지는 실제 예매가 아닌 콘텐츠로 향하는 메타포입니다.
+  </p>
+  <a href="#booking" class="enter">열차 예매로 이동</a>
+</section>
 
-<!-- 검색 -->
-<div class="search-box">
-  <div>
-    <label>출발</label>
-    <select id="from"></select>
+<!-- BOOKING -->
+<section id="booking">
+  <div class="search">
+    <div>
+      <label>출발</label>
+      <select>
+        <option>서울</option>
+        <option>현실</option>
+      </select>
+    </div>
+    <div>
+      <label>도착</label>
+      <select>
+        <option>어딘가</option>
+        <option>가상</option>
+      </select>
+    </div>
+    <div>
+      <label>날짜</label>
+      <input type="date">
+    </div>
+    <button>조회</button>
   </div>
-  <div>
-    <label>도착</label>
-    <select id="to"></select>
-  </div>
-  <div>
-    <label>날짜</label>
-    <input type="date" id="date" />
-  </div>
-  <button onclick="search()">조회</button>
-</div>
 
-<!-- 결과 -->
-<div class="results" id="results"></div>
+  <div class="results">
+    <div class="train">
+      <div class="title">〈추락〉 Official Teaser</div>
+      <div>서울 → 어딘가</div>
+      <div>1:30</div>
+      <div><span class="badge">예매 오픈: 추후공지</span></div>
+      <button class="board" onclick="location.href='#'">탑승</button>
+    </div>
+
+    <div class="train">
+      <div class="title">〈엔딩 전까지 울지마요〉 Live Clip</div>
+      <div>현실 → 가상</div>
+      <div>4:12</div>
+      <div><span class="badge">예매 오픈: 추후공지</span></div>
+      <button class="board" onclick="location.href='#'">탑승</button>
+    </div>
+
+    <div class="empty">
+      선택하신 조건에 맞는 열차가 없습니다.
+    </div>
+  </div>
+</section>
 
 <footer>
   본 페이지는 콘텐츠 안내를 위한 메타포 UI입니다.
 </footer>
 
 </div>
-
-<script>
-const tracks=[...Array(10)].map((_,i)=>`트랙${i+1}`);
-const from=document.getElementById("from");
-const to=document.getElementById("to");
-
-tracks.forEach(t=>{
-  from.innerHTML+=`<option>${t}</option>`;
-  to.innerHTML+=`<option>${t}</option>`;
-});
-
-from.value="트랙1";
-to.value="트랙2";
-
-const today=new Date().toISOString().split("T")[0];
-document.getElementById("date").value=today;
-
-// 콘텐츠 데이터
-const trains=[
-  {
-    title:"〈추락〉 Official Teaser",
-    from:"트랙1",
-    to:"트랙2",
-    date:"2026-03-05",
-    duration:"1:30",
-    status:"soon",
-    link:"#"
-  },
-  {
-    title:"〈엔딩 전까지 울지마요〉 Live Clip",
-    from:"트랙2",
-    to:"트랙3",
-    date:"2026-03-08",
-    duration:"4:12",
-    status:"on",
-    link:"#"
-  }
-];
-
-function search(){
-  const f=from.value;
-  const t=to.value;
-  const d=document.getElementById("date").value;
-
-  const filtered=trains.filter(v=>
-    v.from===f && v.to===t && v.date>=d
-  );
-
-  const box=document.getElementById("results");
-  box.innerHTML="";
-
-  if(!filtered.length){
-    box.innerHTML=`<div class="empty">
-      선택하신 일정에 운행 중인 열차가 없습니다.<br/>
-      다른 날짜를 선택해 주세요.
-    </div>`;
-    return;
-  }
-
-  filtered.forEach(v=>{
-    box.innerHTML+=`
-      <div class="train">
-        <div class="title">${v.title}</div>
-        <div>${v.from} → ${v.to}</div>
-        <div>${v.date}</div>
-        <div>${v.duration}</div>
-        <div><span class="badge ${v.status}">${v.status==="on"?"운행중":"운행예정"}</span></div>
-        <button class="board" onclick="location.href='${v.link}'">탑승</button>
-      </div>
-    `;
-  });
-}
-
-search();
-</script>
 </body>
 </html>
