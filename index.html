@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>다다다 | 더블싱글 예매</title>
-  <meta name="description" content="다다다 3월 더블싱글 프로모션 | 기차 예매 UX 메타포" />
+  <title>다다다 트레인 | 승차권 예매</title>
+  <meta name="description" content="dadada train" />
   <style>
     :root{
       --bg:#0b0d12;
@@ -284,7 +284,7 @@
       <div class="brand">
         <div class="logo" aria-hidden="true"></div>
         <div>
-          <h1>다다다 | 더블싱글 예매</h1>
+          <h1>다다다 트레인 | 승차권 예매</h1>
           <div class="sub">운행조회 · 탑승</div>
         </div>
       </div>
@@ -311,18 +311,16 @@
               <label for="from">출발역</label>
               <select id="from">
                 <option value="현실">현실</option>
-                <option value="지금">지금</option>
-                <option value="여기">여기</option>
-                <option value="일상">일상</option>
+                <option value="???">???</option>
               </select>
             </div>
             <div>
               <label for="to">도착역</label>
               <select id="to">
-                <option value="서울">서울</option>
-                <option value="가상">가상</option>
-                <option value="도피">도피</option>
-                <option value="엔딩">엔딩</option>
+                <option value="???">???</option>
+                <option value="어제">어제</option>
+                <option value="내일">내일</option>
+                <option value="엔딩"엔딩</option>
               </select>
             </div>
             <div>
@@ -343,7 +341,7 @@
           <div class="btnbar">
             <button class="btn primary" id="btnSearch" type="button">조회</button>
             <button class="btn" id="btnReset" type="button">초기화</button>
-            <span class="mini">※ 본 페이지는 예매가 아닙니다.</span>
+            <span class="mini">※ 본 페이지는 실제로 예매되지 않습니다.</span>
           </div>
         </div>
       </div>
@@ -351,7 +349,7 @@
       <aside class="infoBox">
         <div class="card">
           <div class="hd">
-            <p class="title">안내</p>
+            <p class="title">선택된 열차</p>
             <p class="hint">NOTICE</p>
           </div>
           <div class="bd">
@@ -363,30 +361,12 @@
               <span class="badge" id="stampBadge" style="display:none">등급 <strong id="stampText">VIP</strong></span>
             </div>
             <div class="notice" style="margin-top:12px">
-              <p class="k">상품</p>
-              <p class="v">3월 더블싱글 (2편성)</p>
+              <p class="k">안내</p>
+              <p class="v">아래 열차 선택에서 탑승 버튼을 눌러주세요.</p>
             </div>
-            <p class="mini" style="margin:12px 0 0">
-              탑승 버튼을 누르면 외부 링크로 이동합니다.
             </p>
           </div>
         </div>
-
-        <div class="card" id="cs">
-          <div class="hd">
-            <p class="title">고객센터</p>
-            <p class="hint">CS</p>
-          </div>
-          <div class="bd">
-            <div class="kv">
-              <div>운영</div><div>GitHub Pages</div>
-              <div>문의</div><div><a class="smallLink" href="#" onclick="return false;">contact@yourlabel.example</a></div>
-              <div>공지</div><div>콘텐츠는 순차 반영됩니다.</div>
-            </div>
-          </div>
-        </div>
-      </aside>
-    </section>
 
     <!-- 열차선택 -->
     <section id="trains" class="section">
@@ -419,7 +399,6 @@
     <section id="schedule" class="section">
       <div class="sectionTitle">
         <h2>운행 편성</h2>
-        <div class="right">콘텐츠</div>
       </div>
 
       <div class="card" style="overflow:hidden">
@@ -439,7 +418,23 @@
         </table>
       </div>
     </section>
-
+        
+  <div class="card" id="cs">
+          <div class="hd">
+            <p class="title">고객센터</p>
+            <p class="hint">CS</p>
+          </div>
+          <div class="bd">
+            <div class="kv">
+              <div>운영</div><div>GitHub Pages</div>
+              <div>문의</div><div><a class="smallLink" href="#" onclick="return false;">contact@yourlabel.example</a></div>
+              <div>공지</div><div>콘텐츠는 순차 반영됩니다.</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
+    
     <footer class="footer">
       <div>© 다다다</div>
       <div class="mono">index.html / no framework</div>
