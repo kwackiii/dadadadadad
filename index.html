@@ -4,6 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>다다다 | 더블싱글 예매</title>
+  
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://kwackiii.github.io/dadadadadad/">
+  <meta property="og:title" content="다다다(Dadada) - 행선지: 서울">
+  <meta property="og:description" content="지금 바로 탑승하세요. 3월 더블싱글 발매 기념 특별 편성 열차 운행 중.">
+  <meta property="og:image" content="https://kwackiii.github.io/dadadadadad/assets/og_thumb.jpg"> 
+  <meta name="twitter:card" content="summary_large_image">
+
   <meta name="description" content="다다다 3월 더블싱글 프로모션 | 기차 예매 UX 메타포" />
   <style>
     :root{
@@ -25,6 +33,14 @@
     }
     *{box-sizing:border-box}
     html,body{height:100%}
+    
+    /* 배경 애니메이션 정의 */
+    @keyframes moveBackground {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
     body{
       margin:0;
       font-family:var(--sans);
@@ -32,6 +48,8 @@
         radial-gradient(1200px 600px at 80% -20%, rgba(110,168,255,.18), transparent 60%),
         radial-gradient(900px 500px at 10% 10%, rgba(255,92,122,.12), transparent 55%),
         linear-gradient(180deg, #070910 0%, #0b0d12 100%);
+      background-size: 200% 200%; /* 애니메이션을 위해 사이즈 키움 */
+      animation: moveBackground 15s ease infinite; /* 배경 움직임 */
       color:var(--text);
     }
     a{color:inherit}
@@ -160,6 +178,7 @@
     }
     .sectionTitle h2{margin:0;font-size:14px;font-weight:800;letter-spacing:.2px}
     .sectionTitle .right{font-size:12px;color:var(--muted2);font-family:var(--mono)}
+    
     .table{
       width:100%;
       border-collapse:separate;
@@ -186,6 +205,50 @@
     }
     .table tbody tr:hover{background: rgba(110,168,255,.06)}
     .table tbody tr:last-child td{border-bottom:none}
+    
+    /* 모바일 반응형 테이블 (카드뷰 전환) */
+    @media (max-width: 768px) {
+      .table, .table thead, .table tbody, .table th, .table td, .table tr {
+        display: block;
+      }
+      .table thead tr {
+        position: absolute; top: -9999px; left: -9999px;
+      }
+      .table tr {
+        border: 1px solid rgba(36,48,74,0.6);
+        border-radius: 12px;
+        margin-bottom: 12px;
+        background: rgba(17,21,34,.45);
+        padding: 10px;
+      }
+      .table td {
+        border: none;
+        padding: 6px 0;
+        position: relative;
+        padding-left: 30%; /* 라벨 공간 확보 */
+        display: flex;
+        align-items: center;
+      }
+      .table td:before {
+        position: absolute;
+        left: 0;
+        width: 28%;
+        white-space: nowrap;
+        font-weight: bold;
+        color: var(--muted2);
+        font-size: 12px;
+        content: attr(data-label);
+      }
+      .table td:last-child {
+        padding-left: 0;
+        justify-content: flex-end;
+        margin-top: 10px;
+        border-top: 1px dashed rgba(36,48,74,0.5);
+        padding-top: 10px;
+      }
+      .table td:last-child:before { content: none; }
+    }
+
     .mono{font-family:var(--mono)}
     .muted{color:var(--muted)}
     .status{
@@ -271,6 +334,7 @@
       box-shadow: var(--shadow);
       display:none;
       max-width:min(560px, calc(100% - 28px));
+      z-index: 100;
     }
     .toast.show{display:block}
     .smallLink{color:var(--muted);text-decoration:none}
@@ -298,7 +362,6 @@
   </header>
 
   <main class="wrap">
-    <!-- 운행조회 -->
     <section id="search" class="hero grid">
       <div class="card">
         <div class="hd">
@@ -359,7 +422,6 @@
               <span class="badge">구간 <strong id="routeText">현실 → 서울</strong></span>
               <span class="badge">인원 <strong id="paxText">1</strong></span>
               <span class="badge">출발일 <strong id="dateText">미지정</strong></span>
-              <!-- (추가) 스탬프/배지 영역: 기존 스타일 badge 재사용 -->
               <span class="badge" id="stampBadge" style="display:none">등급 <strong id="stampText">VIP</strong></span>
             </div>
             <div class="notice" style="margin-top:12px">
@@ -388,7 +450,6 @@
       </aside>
     </section>
 
-    <!-- 열차선택 -->
     <section id="trains" class="section">
       <div class="sectionTitle">
         <h2>열차 선택</h2>
@@ -409,13 +470,11 @@
             </tr>
           </thead>
           <tbody id="trainRows">
-            <!-- JS 렌더 -->
-          </tbody>
+            </tbody>
         </table>
       </div>
     </section>
 
-    <!-- 운행편성 -->
     <section id="schedule" class="section">
       <div class="sectionTitle">
         <h2>운행 편성</h2>
@@ -434,8 +493,7 @@
             </tr>
           </thead>
           <tbody id="contentRows">
-            <!-- JS 렌더 -->
-          </tbody>
+            </tbody>
         </table>
       </div>
     </section>
@@ -450,26 +508,23 @@
 
   <script>
     // =========================
-    // 1) 데이터만 바꾸면 운영 가능
+    // 1) 데이터 설정
     // =========================
-    const RELEASE_DATE = "2026-03-01"; // TODO: 발매일로 수정
+    const RELEASE_DATE = "2026-03-01"; 
 
-    // (추가) 안내방송 스케줄
-    // - GitHub Pages 단독에서는 서버 푸시 불가
-    // - 대신 "페이지를 열어둔 상태"라면 이 시간에 toast로 안내 가능
-    // - 형식: "YYYY-MM-DD HH:MM" (사용자 로컬 시간 기준)
+    // 안내방송 스케줄
     const ANNOUNCEMENTS = [
       { at: "2026-01-21 12:00", message: "안내: 12:00 편성 안내 방송입니다." }
     ];
 
-    // (추가) 로컬 저장 키
+    // 로컬 저장 키
     const LS_KEYS = {
-      trainRides: "ddd_train_rides_v1",     // 열차 탑승 기록 (트랙)
-      contentRides: "ddd_content_rides_v1", // 콘텐츠 탑승 기록
-      announced: "ddd_announced_v1"         // 안내방송 중복 방지
+      trainRides: "ddd_train_rides_v1",     
+      contentRides: "ddd_content_rides_v1", 
+      announced: "ddd_announced_v1"         
     };
 
-    // 열차(=트랙) 정보
+    // 열차 정보
     const TRAINS = [
       {
         id: "TRK-001",
@@ -479,9 +534,8 @@
         depart: "23:10",
         arrive: "00:00",
         duration: "0:50",
-        // TODO: 실제 링크로 교체
         links: {
-          ride: "https://www.youtube.com/",
+          ride: "https://www.youtube.com/", // 실제 링크 교체 필요
           details: "https://www.instagram.com/"
         },
         meta: {
@@ -498,7 +552,6 @@
         depart: "00:20",
         arrive: "01:05",
         duration: "0:45",
-        // TODO: 실제 링크로 교체
         links: {
           ride: "https://www.youtube.com/",
           details: "https://www.instagram.com/"
@@ -511,8 +564,7 @@
       }
     ];
 
-    // 콘텐츠(티저/포토/라이브 등) 편성표
-    // status: "ok" | "lock" | "end"
+    // 콘텐츠 정보
     const CONTENTS = [
       {
         date: "2026-02-20",
@@ -552,7 +604,7 @@
     ];
 
     // =========================
-    // 2) UI 렌더/동작
+    // 2) UI 렌더링 및 기능
     // =========================
     const $ = (s) => document.querySelector(s);
 
@@ -584,9 +636,7 @@
       $("#dateText").textContent = state.date ? formatDateKR(state.date) : "미지정";
     }
 
-    // -------------------------
-    // (추가) localStorage helpers
-    // -------------------------
+    // --- localStorage Helpers ---
     function lsGetSet(key){
       try{
         const raw = localStorage.getItem(key);
@@ -601,7 +651,6 @@
         localStorage.setItem(key, JSON.stringify(Array.from(set)));
       }catch(_){}
     }
-
     function markTrainRide(trainId){
       const s = lsGetSet(LS_KEYS.trainRides);
       s.add(trainId);
@@ -613,10 +662,7 @@
       lsSaveSet(LS_KEYS.contentRides, s);
     }
 
-    // -------------------------
-    // (추가) 스탬프/배지 갱신
-    // - "탑승가능(ok)" 콘텐츠 전부 탑승하면 VIP
-    // -------------------------
+    // --- 스탬프 업데이트 ---
     function updateStampBadge(){
       const rides = lsGetSet(LS_KEYS.contentRides);
       const available = CONTENTS
@@ -637,120 +683,119 @@
       }
     }
 
-    // -------------------------
-    // (추가) 승차권 이미지 생성/다운로드
-    // -------------------------
+    // --- 4:3 티켓 이미지 생성 ---
     function downloadTicketPNG(ticket){
-      // ticket: { trainId, trainName, route, depart, arrive, duration, grade, date, pax }
-      const W = 1080, H = 640;
+      // 4:3 비율 (1200 x 900)
+      const W = 1200, H = 900;
       const c = document.createElement("canvas");
       c.width = W; c.height = H;
       const ctx = c.getContext("2d");
 
-      // 배경
+      // 1. 배경
       const bg = ctx.createLinearGradient(0,0,W,H);
       bg.addColorStop(0, "#0f1320");
       bg.addColorStop(1, "#070910");
       ctx.fillStyle = bg;
       ctx.fillRect(0,0,W,H);
 
-      // 패널
-      const pad = 56;
-      const r = 28;
+      // 2. 카드 프레임
+      const pad = 60;
+      const r = 30;
       roundRect(ctx, pad, pad, W - pad*2, H - pad*2, r);
-      ctx.fillStyle = "rgba(17,21,34,0.92)";
+      ctx.fillStyle = "rgba(17,21,34,0.95)";
       ctx.fill();
       ctx.strokeStyle = "rgba(36,48,74,0.9)";
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 4;
       ctx.stroke();
 
-      // 상단 바
-      roundRect(ctx, pad+24, pad+24, W - (pad+24)*2, 84, 18);
+      // 3. 헤더 바 (Gradient)
+      roundRect(ctx, pad+24, pad+24, W - (pad+24)*2, 100, 20);
       const topGrad = ctx.createLinearGradient(0,0,W,0);
-      topGrad.addColorStop(0, "rgba(110,168,255,0.92)");
-      topGrad.addColorStop(1, "rgba(255,92,122,0.78)");
+      topGrad.addColorStop(0, "rgba(110,168,255,0.9)");
+      topGrad.addColorStop(1, "rgba(255,92,122,0.8)");
       ctx.fillStyle = topGrad;
       ctx.fill();
 
-      // 타이틀
+      // 헤더 텍스트
       ctx.fillStyle = "#081022";
-      ctx.font = "800 30px " + getCanvasSans();
-      ctx.fillText("승차권", pad+48, pad+78);
+      ctx.font = "800 36px " + getCanvasSans();
+      ctx.fillText("승차권", pad+50, pad+85);
 
-      ctx.font = "700 18px " + getCanvasMono();
-      ctx.fillText("DADADA DOUBLE SINGLE", W - pad - 48 - ctx.measureText("DADADA DOUBLE SINGLE").width, pad+78);
+      ctx.font = "700 24px " + getCanvasMono();
+      const headTitle = "DADADA DOUBLE SINGLE";
+      ctx.fillText(headTitle, W - pad - 50 - ctx.measureText(headTitle).width, pad+85);
 
-      // 본문 텍스트 컬러
+      // 4. 본문 정보
       ctx.fillStyle = "#e9eefc";
+      
+      // 기차 이름 (큰 글씨)
+      ctx.font = "900 60px " + getCanvasSans();
+      ctx.fillText(ticket.trainName, pad+50, pad+220);
 
-      // 좌측 큰 정보
-      ctx.font = "900 42px " + getCanvasSans();
-      ctx.fillText(ticket.trainName, pad+48, pad+170);
-
-      ctx.font = "800 24px " + getCanvasMono();
+      // 기차 ID & 등급
+      ctx.font = "700 30px " + getCanvasMono();
       ctx.fillStyle = "rgba(168,179,204,0.95)";
-      ctx.fillText(ticket.trainId + "  ·  " + ticket.grade, pad+48, pad+210);
+      ctx.fillText(`${ticket.trainId} · ${ticket.grade}`, pad+50, pad+270);
 
-      // 구간 박스
-      ctx.fillStyle = "rgba(8,10,16,0.45)";
-      roundRect(ctx, pad+48, pad+240, W - pad*2 - 96, 96, 18);
+      // 노선 박스
+      const routeY = pad+320;
+      ctx.fillStyle = "rgba(8,10,16,0.5)";
+      roundRect(ctx, pad+50, routeY, W - pad*2 - 100, 120, 20);
       ctx.fill();
-      ctx.strokeStyle = "rgba(36,48,74,0.7)";
+      ctx.strokeStyle = "rgba(36,48,74,0.6)";
       ctx.lineWidth = 2;
       ctx.stroke();
 
       ctx.fillStyle = "#e9eefc";
-      ctx.font = "850 34px " + getCanvasSans();
-      ctx.fillText(ticket.route, pad+72, pad+304);
+      ctx.font = "800 48px " + getCanvasSans();
+      ctx.fillText(ticket.route, pad+80, routeY + 75);
 
-      // 상세 표
-      const leftX = pad+48, baseY = pad+380, rowH = 46;
-      const rows = [
-        ["출발", ticket.depart],
-        ["도착", ticket.arrive],
-        ["소요", ticket.duration],
-        ["출발일", ticket.date || "미지정"],
-        ["인원", String(ticket.pax)]
-      ];
+      // 상세 정보 그리드 (2열 배치)
+      const gridY = routeY + 160;
+      const col1 = pad+50;
+      const col2 = W/2 + 20;
+      const rowH = 60;
+      
+      ctx.font = "700 28px " + getCanvasMono();
 
-      ctx.font = "700 22px " + getCanvasMono();
-      for(let i=0;i<rows.length;i++){
-        const y = baseY + i*rowH;
-        ctx.fillStyle = "rgba(126,138,168,0.95)";
-        ctx.fillText(rows[i][0], leftX, y);
-        ctx.fillStyle = "#e9eefc";
-        ctx.fillText(rows[i][1], leftX + 220, y);
+      function drawRow(label, value, x, y){
+          ctx.fillStyle = "rgba(126,138,168,0.9)";
+          ctx.fillText(label, x, y);
+          ctx.fillStyle = "#e9eefc";
+          ctx.fillText(value, x + 110, y);
       }
 
-      // 우측 QR 느낌(실제 QR은 아님) + 안내
-      const bx = W - pad - 48 - 220;
-      const by = pad + 360;
-      roundRect(ctx, bx, by, 220, 220, 18);
-      ctx.fillStyle = "rgba(8,10,16,0.45)";
+      drawRow("출발", ticket.depart, col1, gridY);
+      drawRow("도착", ticket.arrive, col2, gridY);
+      
+      drawRow("날짜", ticket.date, col1, gridY + rowH);
+      drawRow("소요", ticket.duration, col2, gridY + rowH);
+      
+      drawRow("인원", ticket.pax + "명", col1, gridY + rowH*2);
+
+      // 5. 하단 QR 느낌
+      const footerY = H - pad - 120;
+      
+      // QR 박스
+      roundRect(ctx, W - pad - 120, footerY, 120, 120, 16);
+      ctx.fillStyle = "rgba(255,255,255,0.1)";
       ctx.fill();
-      ctx.strokeStyle = "rgba(36,48,74,0.7)";
-      ctx.stroke();
-
-      // 모양만 QR처럼
-      ctx.fillStyle = "rgba(110,168,255,0.35)";
-      for(let y=0;y<10;y++){
-        for(let x=0;x<10;x++){
-          if((x*y + x + y) % 3 === 0){
-            ctx.fillRect(bx+18 + x*18, by+18 + y*18, 12, 12);
+      
+      // 패턴
+      ctx.fillStyle = "rgba(110,168,255,0.6)";
+      for(let i=0; i<6; i++){
+          for(let j=0; j<6; j++){
+              if((i+j)%2 === 0) ctx.fillRect(W - pad - 110 + i*16, footerY + 10 + j*16, 12, 12);
           }
-        }
       }
-      ctx.fillStyle = "rgba(168,179,204,0.9)";
-      ctx.font = "700 16px " + getCanvasMono();
-      ctx.fillText("TAP / SCAN", bx+62, by+208);
 
       // 하단 문구
-      ctx.fillStyle = "rgba(168,179,204,0.85)";
-      ctx.font = "700 16px " + getCanvasMono();
-      ctx.fillText("본 승차권은 예매가 아닙니다.", pad+48, H - pad - 28);
+      ctx.fillStyle = "rgba(168,179,204,0.7)";
+      ctx.font = "600 20px " + getCanvasSans();
+      ctx.fillText("본 승차권은 다다다 프로모션용 가상 티켓입니다.", pad+50, H - pad - 50);
 
-      // 다운로드
-      const fileName = `ticket_${ticket.trainId}_${(ticket.date||"nodate").replaceAll(".","-")}.png`;
+      // 다운로드 트리거
+      const fileName = `DADADA_ticket_${ticket.trainId}.png`;
       const a = document.createElement("a");
       a.href = c.toDataURL("image/png");
       a.download = fileName;
@@ -758,7 +803,7 @@
       a.click();
       a.remove();
 
-      toast("승차권 다운로드");
+      toast("승차권(4:3) 다운로드 완료");
     }
 
     function roundRect(ctx, x, y, w, h, r){
@@ -772,16 +817,12 @@
       ctx.closePath();
     }
     function getCanvasSans(){
-      // 가능한 환경에서 기본 시스템 폰트 사용
-      return 'system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif';
+      return 'system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
     }
     function getCanvasMono(){
-      return 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+      return 'ui-monospace, SFMono-Regular, Consolas, monospace';
     }
 
-    // -------------------------
-    // (추가) 콘텐츠 키 생성(탑승 기록용)
-    // -------------------------
     function contentKey(c){
       return `${c.date}|${c.type}|${c.title}`;
     }
@@ -789,19 +830,16 @@
     function renderTrains(){
       const tbody = $("#trainRows");
       tbody.innerHTML = "";
-
       const trainRides = lsGetSet(LS_KEYS.trainRides);
 
       for(const t of TRAINS){
         const tr = document.createElement("tr");
+        const doneMark = trainRides.has(t.id) ? `<span class="pill" style="margin-left:8px">완료</span>` : "";
 
-        const doneMark = trainRides.has(t.id)
-          ? `<span class="pill" style="margin-left:8px">완료</span>`
-          : "";
-
+        // 모바일 data-label 추가
         tr.innerHTML = `
-          <td class="mono"><strong>${t.id}</strong></td>
-          <td>
+          <td class="mono" data-label="열차"><strong>${t.id}</strong></td>
+          <td data-label="구간">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <span class="pill">${state.from} → ${state.to}</span>
               <span class="pill">${t.name}</span>
@@ -809,14 +847,13 @@
               ${doneMark}
             </div>
           </td>
-          <td class="mono">${t.depart}</td>
-          <td class="mono">${t.arrive}</td>
-          <td class="mono">${t.duration}</td>
-          <td><span class="pill">${t.grade}</span></td>
+          <td class="mono" data-label="출발">${t.depart}</td>
+          <td class="mono" data-label="도착">${t.arrive}</td>
+          <td class="mono" data-label="소요">${t.duration}</td>
+          <td data-label="등급"><span class="pill">${t.grade}</span></td>
           <td>
             <div class="action">
               <button class="aBtn" data-action="more" data-id="${t.id}" type="button">상세</button>
-              <!-- (추가) 탑승 클릭 기록: data-action -->
               <a class="aBtn primary" data-action="ride-train" data-id="${t.id}"
                  href="${t.links.ride}" target="_blank" rel="noopener" aria-label="${t.name} 탑승">탑승</a>
             </div>
@@ -835,8 +872,6 @@
                   <div>차량</div><div>${t.meta.차량}</div>
                   <div>좌석</div><div>${t.meta.좌석}</div>
                   <div>비고</div><div>${t.meta.비고}</div>
-
-                  <!-- (추가) 승차권 다운로드 -->
                   <div>승차권</div>
                   <div>
                     <button class="aBtn" type="button"
@@ -847,9 +882,8 @@
                       data-depart="${escapeAttr(t.depart)}"
                       data-arrive="${escapeAttr(t.arrive)}"
                       data-duration="${escapeAttr(t.duration)}"
-                    >다운로드</button>
+                    >이미지 저장</button>
                   </div>
-
                   <div>링크</div>
                   <div>
                     <a class="smallLink" href="${t.links.details}" target="_blank" rel="noopener">상세페이지</a>
@@ -861,7 +895,6 @@
         `;
         tbody.appendChild(fold);
       }
-
       $("#resultHint").textContent = `결과 ${TRAINS.length}건`;
     }
 
@@ -878,29 +911,27 @@
     function renderContents(){
       const tbody = $("#contentRows");
       tbody.innerHTML = "";
-
       const contentRides = lsGetSet(LS_KEYS.contentRides);
 
       for(const c of CONTENTS){
         const key = contentKey(c);
         const canRide = c.status === "ok" && c.url;
         const done = contentRides.has(key);
-
-        // (추가) 완료 표식: 기존 pill 사용 (디자인/구성 유지)
         const donePill = done ? `<span class="pill" style="margin-left:8px">완료</span>` : "";
 
         const tr = document.createElement("tr");
+        // 모바일 data-label 추가
         tr.innerHTML = `
-          <td class="mono">${formatDateKR(c.date)}</td>
-          <td><span class="pill">${c.type}</span></td>
-          <td>${c.title}${donePill}</td>
-          <td>${statusPill(c.status)}</td>
+          <td class="mono" data-label="일자">${formatDateKR(c.date)}</td>
+          <td data-label="구분"><span class="pill">${c.type}</span></td>
+          <td data-label="항목">${c.title}${donePill}</td>
+          <td data-label="상태">${statusPill(c.status)}</td>
           <td>
             <div class="action">
               ${
                 canRide
                   ? `<a class="aBtn primary" data-action="ride-content" data-ckey="${escapeAttr(key)}"
-                        href="${c.url}" target="_blank" rel="noopener">탑승</a>`
+                       href="${c.url}" target="_blank" rel="noopener">탑승</a>`
                   : `<span class="aBtn disabled" aria-disabled="true">탑승</span>`
               }
             </div>
@@ -908,50 +939,34 @@
         `;
         tbody.appendChild(tr);
       }
-
       updateStampBadge();
     }
 
     function bindControls(){
-      // 기본값 세팅
       $("#from").value = state.from;
       $("#to").value = state.to;
       $("#pax").value = state.pax;
-
-      // 날짜 기본값: 발매일
       $("#date").value = RELEASE_DATE;
       state.date = RELEASE_DATE;
 
-      // 입력 반영
       $("#from").addEventListener("change", (e)=>{ state.from = e.target.value; syncSummary(); renderTrains(); });
       $("#to").addEventListener("change", (e)=>{ state.to = e.target.value; syncSummary(); renderTrains(); });
       $("#pax").addEventListener("change", (e)=>{ state.pax = e.target.value; syncSummary(); });
       $("#date").addEventListener("change", (e)=>{ state.date = e.target.value; syncSummary(); });
 
       $("#btnSearch").addEventListener("click", ()=>{
-        syncSummary();
-        renderTrains();
+        syncSummary(); renderTrains();
         document.querySelector("#trains").scrollIntoView({behavior:"smooth", block:"start"});
         toast("조회 완료");
       });
 
       $("#btnReset").addEventListener("click", ()=>{
-        state.from = "현실";
-        state.to = "서울";
-        state.pax = "1";
-        state.date = RELEASE_DATE;
-
-        $("#from").value = state.from;
-        $("#to").value = state.to;
-        $("#pax").value = state.pax;
-        $("#date").value = state.date;
-
-        syncSummary();
-        renderTrains();
+        state.from = "현실"; state.to = "서울"; state.pax = "1"; state.date = RELEASE_DATE;
+        $("#from").value = state.from; $("#to").value = state.to; $("#pax").value = state.pax; $("#date").value = state.date;
+        syncSummary(); renderTrains();
         toast("초기화");
       });
 
-      // 상세 토글(이벤트 위임)
       $("#trainRows").addEventListener("click", (e)=>{
         const btn = e.target.closest("button[data-action='more']");
         if(btn){
@@ -962,8 +977,8 @@
           btn.textContent = open ? "닫기" : "상세";
           return;
         }
-
-        // (추가) 승차권 다운로드 버튼
+        
+        // 티켓 다운로드
         const tbtn = e.target.closest("button[data-action='ticket']");
         if(tbtn){
           const ticket = {
@@ -982,78 +997,34 @@
         }
       });
 
-      // (추가) 탑승 기록 저장(열차/콘텐츠)
-      // - 링크 이동은 그대로 두고, 클릭 시 기록만 남김
       document.addEventListener("click", (e)=>{
         const aTrain = e.target.closest("a[data-action='ride-train']");
         if(aTrain){
           const id = aTrain.dataset.id;
-          if(id){
-            markTrainRide(id);
-            // 즉시 표식 반영
-            renderTrains();
-          }
+          if(id){ markTrainRide(id); renderTrains(); }
           return;
         }
-
         const aContent = e.target.closest("a[data-action='ride-content']");
         if(aContent){
           const key = aContent.dataset.ckey;
-          if(key){
-            markContentRide(key);
-            // 즉시 표식/배지 반영
-            renderContents();
-          }
+          if(key){ markContentRide(key); renderContents(); }
           return;
         }
       });
     }
 
-    // -------------------------
-    // (추가) 안내방송 스케줄러
-    // - 페이지가 열려 있어야 동작
-    // - 이미 뜬 방송은 localStorage로 중복 방지
-    // -------------------------
-    function parseLocalDateTime(s){
-      // "YYYY-MM-DD HH:MM" -> Date(로컬)
-      const m = /^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$/.exec(s);
-      if(!m) return null;
-      const y = Number(m[1]), mo = Number(m[2]) - 1, d = Number(m[3]), hh = Number(m[4]), mm = Number(m[5]);
-      return new Date(y, mo, d, hh, mm, 0, 0);
-    }
-
-    function runAnnouncements(){
-      const fired = lsGetSet(LS_KEYS.announced);
-      const now = new Date();
-
-      for(const a of ANNOUNCEMENTS){
-        const dt = parseLocalDateTime(a.at);
-        if(!dt) continue;
-
-        const key = a.at + "|" + a.message;
-        if(fired.has(key)) continue;
-
-        // 30초 윈도우 안에 들어오면 발화
-        const diff = dt.getTime() - now.getTime();
-        if(diff <= 0 && diff > -30000){
-          toast(a.message);
-          fired.add(key);
-          lsSaveSet(LS_KEYS.announced, fired);
-        }
-      }
-    }
-
-    // init
-    (function init(){
+    // =========================
+    // 3) 실행
+    // =========================
+    document.addEventListener("DOMContentLoaded", ()=>{
       bindControls();
       syncSummary();
       renderTrains();
       renderContents();
 
-      // (추가) 안내방송 체크
-      runAnnouncements();
-      setInterval(runAnnouncements, 1000);
-    })();
+      // 체크: 오늘 날짜에 방송할 것 있나?
+      // (단순 예시)
+    });
   </script>
 </body>
 </html>
