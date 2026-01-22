@@ -35,7 +35,7 @@
       --sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
     }
 
-    /* 라이트 모드 오버라이드 (html → body 유지) */
+    /* 라이트 모드 오버라이드 (✅ html → body 로 수정) */
     body[data-theme="light"] {
       --bg: #f4f5f9;
       --panel: #ffffff;
@@ -69,7 +69,7 @@
     .topbar{
       position:sticky;top:0;z-index:100;
       backdrop-filter: blur(12px);
-      background: var(--bg);
+      background: var(--bg); /* 투명도 제거하여 깔끔하게 */
       border-bottom:1px solid var(--line);
       transition: background 0.3s ease, border-color 0.3s ease;
     }
@@ -205,13 +205,25 @@
       padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700;
       text-decoration:none; display:inline-block; cursor:pointer;
       border:1px solid var(--line); background:var(--bg); color:var(--text);
+      transition:0.2s;
     }
     .action-btn.primary{
       background:var(--primary); border-color:var(--primary); color:#fff;
     }
+
+    /* (추가) hover 효과: 버튼 */
+    .action-btn:not(:disabled):hover{
+      background:var(--primary-dim);
+      border-color:var(--primary);
+    }
+    .action-btn.primary:not(:disabled):hover{
+      filter:brightness(1.1);
+    }
     
     .fold-content{
       background:var(--bg); padding:16px; display:none; border-top:1px solid var(--line);
+      /* (변경) 상세 펼침 영역은 좌측 정렬 */
+      text-align:left;
     }
     .fold-content.open{display:block}
     .kv-list{display:grid; grid-template-columns: 80px 1fr; gap:8px; font-size:13px;}
@@ -233,7 +245,7 @@
     }
 
     /* =========================================================
-       (추가) 나의 여정 정렬 보정
+       (추가) 나의 여정: 배지 가운데 정렬 + 문구 상하 여백 동일(세로 중앙 느낌)
     ========================================================= */
     #tripInfo{
       display:flex;
@@ -252,7 +264,8 @@
     }
 
     /* =========================================================
-       (추가) 데스크톱 테이블 중앙 정렬 통일
+       (추가) 테이블 “데스크톱”에서만 전체 가운데 정렬
+       + (추가) 행 hover 효과
     ========================================================= */
     @media (min-width: 769px) {
       .table th,
@@ -261,6 +274,11 @@
       }
       .table td:last-child{
         text-align:center;
+      }
+
+      /* (추가) 행 hover */
+      .table tbody tr:hover{
+        background:var(--primary-dim);
       }
     }
   </style>
@@ -350,6 +368,7 @@
         </div>
       </div>
     </div>
+
     <div id="trains" style="margin-top:40px;">
       <h2 style="font-size:18px; margin-bottom:12px;">열차 선택</h2>
       <div class="table-wrap">
@@ -368,7 +387,6 @@
         </table>
       </div>
     </div>
-
     <div id="schedule" style="margin-top:40px;">
       <h2 style="font-size:18px; margin-bottom:12px;">운행 편성</h2>
       <div class="table-wrap">
@@ -414,6 +432,7 @@
     const themeBtn = document.getElementById('themeToggle');
     const body = document.body;
 
+    // 저장된 테마 불러오기
     const savedTheme = localStorage.getItem('theme') || 'dark';
     body.setAttribute('data-theme', savedTheme);
     updateThemeIcon(savedTheme);
@@ -433,9 +452,11 @@
     // --- 3. 렌더링 & 기능 ---
     const $ = (s) => document.querySelector(s);
     
+    // 초기 날짜 세팅
     $('#dateInput').value = "2026-03-01";
     updateTripInfo();
 
+    // 조회 버튼 등 이벤트 리스너
     $('#btnSearch').onclick = () => { showToast('조회된 열차 정보를 확인하세요.'); };
     $('#btnReset').onclick = () => { 
       $('#from').value = "현실"; $('#to').value = "서울";
@@ -466,7 +487,7 @@
       setTimeout(()=> t.classList.remove('show'), 3000);
     }
 
-    // --- 열차 리스트 ---
+    // 열차 리스트 렌더링
     const tBody = $('#trainList');
     TRAINS.forEach(t => {
       const row = document.createElement('tr');
@@ -476,7 +497,7 @@
           <span class="pill">${t.id}</span>
         </td>
         <td data-label="여정">
-          <div style="display:flex; align-items:center; gap:6px; justify-content:center;">
+          <div style="display:flex; align-items:center; gap:6px;">
             <strong>${t.dep}</strong> 
             <span style="color:var(--text-muted)">→</span> 
             <strong>${t.arr}</strong>
@@ -491,6 +512,7 @@
       `;
       tBody.appendChild(row);
 
+      // 상세(접기/펴기) 행
       const foldRow = document.createElement('tr');
       foldRow.innerHTML = `
         <td colspan="5" style="padding:0; border:none;">
@@ -526,7 +548,7 @@
       }
     }
 
-    // --- 콘텐츠 리스트 ---
+    // 콘텐츠 리스트 렌더링
     const cBody = $('#contentList');
     CONTENTS.forEach(c => {
       const row = document.createElement('tr');
@@ -548,7 +570,7 @@
       cBody.appendChild(row);
     });
 
-    // --- 4. 티켓 다운로드 ---
+    // --- 4. 티켓 다운로드 (테마 연동: 다크는 기존 그대로 유지) ---
     function downloadTicket(id, name, dep, arr){
       const W = 1200;
       const H = 900;
@@ -556,59 +578,137 @@
       canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext('2d');
 
-      const grad = ctx.createLinearGradient(0, 0, W, H);
-      grad.addColorStop(0, "#1a1e2b");
-      grad.addColorStop(1, "#0b0d12");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0,0,W,H);
+      const currentTheme = document.body.getAttribute('data-theme') || 'dark';
 
-      const pad = 60;
-      ctx.fillStyle = "#222633";
-      ctx.strokeStyle = "rgba(255,255,255,0.1)";
-      ctx.lineWidth = 2;
-      roundRect(ctx, pad, pad, W - pad*2, H - pad*2, 30);
-      ctx.fill();
-      ctx.stroke();
+      if(currentTheme === 'light'){
+        // 라이트 테마 티켓 (다크 티켓 디자인은 변경 금지 → 여기만 별도)
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0,0,W,H);
 
-      ctx.fillStyle = "#6ea8ff";
-      ctx.fillRect(pad, pad+40, W-pad*2, 8);
+        // 프레임
+        const pad = 60;
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = "rgba(26, 30, 43, 0.12)";
+        ctx.lineWidth = 2;
 
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "800 50px sans-serif";
-      ctx.fillText("BOARDING PASS", pad+60, pad+130);
+        roundRect(ctx, pad, pad, W - pad*2, H - pad*2, 30);
+        ctx.fill();
+        ctx.stroke();
 
-      ctx.fillStyle = "#6ea8ff";
-      ctx.font = "600 30px sans-serif";
-      ctx.fillText("DADADA Double Single", pad+60, pad+180);
+        // 상단 띠 (라이트 테마 primary)
+        ctx.fillStyle = "#2d6cdb";
+        ctx.fillRect(pad, pad+40, W-pad*2, 8);
 
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "900 80px sans-serif";
-      ctx.fillText(name, pad+60, pad+320);
+        // 텍스트
+        ctx.fillStyle = "#1a1e2b";
+        ctx.textAlign = "left";
+        ctx.font = "800 50px sans-serif";
+        ctx.fillText("BOARDING PASS", pad+60, pad+130);
 
-      ctx.fillStyle = "rgba(255,255,255,0.05)";
-      ctx.fillRect(pad+60, pad+380, W-(pad*2)-120, 180);
-      
-      ctx.fillStyle = "#8b9bb4";
-      ctx.font = "500 24px sans-serif";
-      ctx.fillText("DEPART", pad+100, pad+430);
-      ctx.fillText("ARRIVE", pad+400, pad+430);
-      ctx.fillText("TRAIN NO", pad+700, pad+430);
+        ctx.fillStyle = "#2d6cdb";
+        ctx.font = "600 30px sans-serif";
+        ctx.fillText("DADADA Double Single", pad+60, pad+180);
 
-      ctx.fillStyle = "#fff";
-      ctx.font = "700 40px monospace";
-      ctx.fillText(dep, pad+100, pad+490);
-      ctx.fillText(arr, pad+400, pad+490);
-      ctx.fillText(id, pad+700, pad+490);
+        ctx.fillStyle = "#1a1e2b";
+        ctx.font = "900 80px sans-serif";
+        ctx.fillText(name, pad+60, pad+320);
 
-      ctx.fillStyle = "#8b9bb4";
-      ctx.font = "400 20px sans-serif";
-      ctx.fillText("This ticket is a virtual item for fans.", pad+60, H - pad - 60);
-      
-      ctx.textAlign = "right";
-      ctx.fillStyle = "rgba(255,255,255,0.3)";
-      ctx.font = "800 30px sans-serif";
-      ctx.fillText("DADADA", W - pad - 60, H - pad - 60);
+        // 시간 정보 박스
+        ctx.fillStyle = "rgba(26, 30, 43, 0.04)";
+        ctx.fillRect(pad+60, pad+380, W-(pad*2)-120, 180);
 
+        ctx.fillStyle = "#58657d";
+        ctx.font = "500 24px sans-serif";
+        ctx.fillText("DEPART", pad+100, pad+430);
+        ctx.fillText("ARRIVE", pad+400, pad+430);
+        ctx.fillText("TRAIN NO", pad+700, pad+430);
+
+        ctx.fillStyle = "#1a1e2b";
+        ctx.font = "700 40px monospace";
+        ctx.fillText(dep, pad+100, pad+490);
+        ctx.fillText(arr, pad+400, pad+490);
+        ctx.fillText(id, pad+700, pad+490);
+
+        ctx.fillStyle = "#58657d";
+        ctx.font = "400 20px sans-serif";
+        ctx.fillText("This ticket is a virtual item for fans.", pad+60, H - pad - 60);
+
+        ctx.textAlign = "right";
+        ctx.fillStyle = "rgba(26,30,43,0.28)";
+        ctx.font = "800 30px sans-serif";
+        ctx.fillText("DADADA", W - pad - 60, H - pad - 60);
+
+      } else {
+        // ===== 기존 다크 테마 티켓(절대 변경 금지) =====
+
+        // 1. 배경 (항상 다크 테마 느낌의 프리미엄 디자인)
+        const grad = ctx.createLinearGradient(0, 0, W, H);
+        grad.addColorStop(0, "#1a1e2b");
+        grad.addColorStop(1, "#0b0d12");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0,0,W,H);
+
+        // 2. 티켓 프레임
+        const pad = 60;
+        ctx.fillStyle = "#222633";
+        ctx.strokeStyle = "rgba(255,255,255,0.1)";
+        ctx.lineWidth = 2;
+        
+        // 둥근 사각형 그리기
+        roundRect(ctx, pad, pad, W - pad*2, H - pad*2, 30);
+        ctx.fill();
+        ctx.stroke();
+
+        // 3. 상단 띠
+        ctx.fillStyle = "#6ea8ff";
+        ctx.fillRect(pad, pad+40, W-pad*2, 8);
+
+        // 4. 텍스트 내용
+        ctx.fillStyle = "#ffffff";
+        ctx.textAlign = "left";
+
+        // 타이틀
+        ctx.font = "800 50px sans-serif";
+        ctx.fillText("BOARDING PASS", pad+60, pad+130);
+        
+        ctx.fillStyle = "#6ea8ff";
+        ctx.font = "600 30px sans-serif";
+        ctx.fillText("DADADA Double Single", pad+60, pad+180);
+
+        // 열차 정보 (중앙)
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "900 80px sans-serif";
+        ctx.fillText(name, pad+60, pad+320);
+
+        // 시간 정보 박스
+        ctx.fillStyle = "rgba(255,255,255,0.05)";
+        ctx.fillRect(pad+60, pad+380, W-(pad*2)-120, 180);
+        
+        ctx.fillStyle = "#8b9bb4"; // 라벨 색
+        ctx.font = "500 24px sans-serif";
+        ctx.fillText("DEPART", pad+100, pad+430);
+        ctx.fillText("ARRIVE", pad+400, pad+430);
+        ctx.fillText("TRAIN NO", pad+700, pad+430);
+
+        ctx.fillStyle = "#fff"; // 값 색
+        ctx.font = "700 40px monospace";
+        ctx.fillText(dep, pad+100, pad+490);
+        ctx.fillText(arr, pad+400, pad+490);
+        ctx.fillText(id, pad+700, pad+490);
+
+        // 5. 하단 꾸밈 (QR 제거됨)
+        ctx.fillStyle = "#8b9bb4";
+        ctx.font = "400 20px sans-serif";
+        ctx.fillText("This ticket is a virtual item for fans.", pad+60, H - pad - 60);
+        
+        // 우측 하단 로고 텍스트
+        ctx.textAlign = "right";
+        ctx.fillStyle = "rgba(255,255,255,0.3)";
+        ctx.font = "800 30px sans-serif";
+        ctx.fillText("DADADA", W - pad - 60, H - pad - 60);
+      }
+
+      // 다운로드 트리거
       const link = document.createElement('a');
       link.download = `Ticket_${id}.png`;
       link.href = canvas.toDataURL();
