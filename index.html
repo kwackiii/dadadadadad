@@ -14,28 +14,6 @@
 
   <meta name="description" content="다다다 3월 더블싱글 프로모션" />
   <style>
-    /* 테이블 가운데 정렬 (추가) */
-.table th {
-  text-align: center;
-}
-
-.table td {
-  text-align: center;
-}
-
-.table td > * {
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.table td:last-child {
-  text-align: center;
-}
-
-.table td:last-child > * {
-  margin: 0 4px;
-}
-
     /* [테마 설정] 
       기본(다크) 변수 정의 후, [data-theme="light"]에서 덮어쓰기 
     */
@@ -57,7 +35,7 @@
       --sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
     }
 
-    /* 라이트 모드 오버라이드 */
+    /* 라이트 모드 오버라이드 (✅ html → body 로 수정) */
     body[data-theme="light"] {
       --bg: #f4f5f9;
       --panel: #ffffff;
@@ -253,10 +231,26 @@
       text-align:center; padding:40px 0; color:var(--text-muted); font-size:12px;
       border-top:1px solid var(--line); margin-top:40px;
     }
+
+    /* =========================================================
+       ✅ (추가) 테이블 “데스크톱”에서만 전체 가운데 정렬
+       - 워딩/기능/구조 변경 없음
+       - 모바일 카드뷰(@media max-width:768px)는 기존대로 유지
+    ========================================================= */
+    @media (min-width: 769px) {
+      .table th,
+      .table td{
+        text-align:center;
+      }
+      .table td:last-child{
+        text-align:center;
+      }
+    }
   </style>
 </head>
 
-<body data-theme="dark"> <div class="topbar">
+<body data-theme="dark">
+  <div class="topbar">
     <div class="inner">
       <div class="brand">
         <div class="logo"></div>
@@ -277,7 +271,6 @@
   </div>
 
   <main class="wrap">
-    
     <div class="grid-hero" id="search">
       <div class="card">
         <div class="hd">
@@ -356,7 +349,7 @@
             </tr>
           </thead>
           <tbody id="trainList">
-            </tbody>
+          </tbody>
         </table>
       </div>
     </div>
@@ -375,7 +368,7 @@
             </tr>
           </thead>
           <tbody id="contentList">
-            </tbody>
+          </tbody>
         </table>
       </div>
     </div>
